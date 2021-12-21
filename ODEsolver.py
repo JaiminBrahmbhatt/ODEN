@@ -1,3 +1,4 @@
+from six import b
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,7 +39,7 @@ plt.rcParams['font.serif'] = "cm"
 
 class ODEsolver():
     
-    def __init__(self, order, diffeq, x, initial_condition, epochs, architecture, initializer, activation, optimizer, prediction_save, weights_save):
+    def __init__(self, order, diffeq, x, initial_condition, epochs, architecture, initializer, activation, optimizer, prediction_save, weights_save, a, b):
         """
         order : differential equation order (ex: order = 2) 
         diffeq : differential equation as defined in the class DiffEq
@@ -58,6 +59,8 @@ class ODEsolver():
         self.order = order
         self.diffeq = diffeq
         self.x = x
+        self.a = a
+        self.b = b
         self.initial_condition = initial_condition
         self.n = len(self.x)
         self.epochs = epochs
@@ -75,7 +78,7 @@ class ODEsolver():
         x = self.x
         x = tf.convert_to_tensor(x)
         x = tf.reshape(x, (self.n, 1))
-        self.neural_net.compile(loss = self.custom_cost(x), optimizer = self.optimizer, experimental_run_tf_function = False)
+        self.neural_net.compile(loss = self.custom_cost(x, a, b), optimizer = self.optimizer, experimental_run_tf_function = False)
         print("------- Model compiled -------")
 
         #Raise an exception is both prediction_save and weights_save are True
@@ -138,7 +141,7 @@ class ODEsolver():
         return y, dy_dx, d2y_dx2
 
     
-    def differential_cost(self, x):
+    def differential_cost(self, x, a, b):
         """
         Defines the differential cost function for one neural network
         input.
@@ -148,7 +151,7 @@ class ODEsolver():
         #----------------------------------------------
         #------------DIFFERENTIAL-EQUATION-------------
         #----------------------------------------------
-        de = DiffEq(self.diffeq, x, y, dydx, d2ydx2)
+        de = DiffEq(self.diffeq, x, y, dydx, d2ydx2, a, b)
         differential_equation = de.eq
         #----------------------------------------------
         #----------------------------------------------
@@ -157,7 +160,7 @@ class ODEsolver():
         return tf.square(differential_equation)
 
 
-    def custom_cost(self, x):
+    def custom_cost(self, x, a, b):
         """
         Defines the cost function for a batch.
         """
@@ -165,7 +168,7 @@ class ODEsolver():
             x0 = self.initial_condition[0]
             y0 = self.initial_condition[1]
             def loss(y_true, y_pred):
-                differential_cost_term = tf.math.reduce_sum(self.differential_cost(x))
+                differential_cost_term = tf.math.reduce_sum(self.differential_cost(x, a, b))
                 boundary_cost_term = tf.square(self.NN_output(np.asarray([[x0]]))[0][0] - y0)
                 return differential_cost_term/self.n + boundary_cost_term
             return loss
@@ -175,7 +178,7 @@ class ODEsolver():
             dx0 = np.float64(self.initial_condition[1][0])
             dy0 = np.float64(self.initial_condition[1][1])
             def loss(y_true, y_pred):
-                differential_cost_term = tf.math.reduce_sum(self.differential_cost(x))
+                differential_cost_term = tf.math.reduce_sum(self.differential_cost(x, a, b))
                 boundary_cost_term = tf.square(self.NN_output(np.asarray([[x0]]))[0][0] - y0)
                 boundary_cost_term += tf.square(self.NN_output(np.asarray([[dx0]]))[0][0] - dy0)
                 return differential_cost_term/self.n + boundary_cost_term

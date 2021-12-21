@@ -1,0 +1,8 @@
+a = 0.0001, b = 1e-12, points = 8, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 16, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 32, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 64, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 128, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 256, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 512, architecture = [8] 
+a = 0.0001, b = 1e-12, points = 1024, architecture = [8] 
